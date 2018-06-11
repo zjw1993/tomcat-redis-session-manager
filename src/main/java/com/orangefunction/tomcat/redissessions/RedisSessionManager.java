@@ -1,9 +1,17 @@
 package com.orangefunction.tomcat.redissessions;
 
-import com.orangefunction.tomcat.redissessions.util.LifecycleSupport;
-import org.apache.catalina.*;
-//import org.apache.catalina.util.LifecycleSupport;
+import org.apache.catalina.Lifecycle;
+import org.apache.catalina.LifecycleException;
+import org.apache.catalina.LifecycleListener;
+import org.apache.catalina.util.LifecycleSupport;
+import org.apache.catalina.LifecycleState;
+import org.apache.catalina.Loader;
+import org.apache.catalina.Valve;
+import org.apache.catalina.Session;
 import org.apache.catalina.session.ManagerBase;
+
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import org.apache.commons.pool2.impl.BaseObjectPoolConfig;
 
 import redis.clients.util.Pool;
 import redis.clients.jedis.JedisPool;
@@ -14,6 +22,7 @@ import redis.clients.jedis.Protocol;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Set;
 import java.util.EnumSet;
@@ -266,7 +275,7 @@ public class RedisSessionManager extends ManagerBase implements Lifecycle {
     setState(LifecycleState.STARTING);
 
     Boolean attachedToValve = false;
-    for (Valve valve : this.getContext().getPipeline().getValves()) {
+    for (Valve valve : getContainer().getPipeline().getValves()) {
       if (valve instanceof RedisSessionHandlerValve) {
         this.handlerValve = (RedisSessionHandlerValve) valve;
         this.handlerValve.setRedisSessionManager(this);
@@ -293,7 +302,7 @@ public class RedisSessionManager extends ManagerBase implements Lifecycle {
 
     initializeDatabaseConnection();
 
-    //setDistributable(true);
+    setDistributable(true);
   }
 
 
@@ -385,10 +394,6 @@ public class RedisSessionManager extends ManagerBase implements Lifecycle {
     }
 
     return session;
-  }
-
-  private int getMaxInactiveInterval() {
-    return this.getContext().getSessionTimeout() * 60;
   }
 
   private String sessionIdWithJvmRoute(String sessionId, String jvmRoute) {
@@ -708,9 +713,9 @@ public class RedisSessionManager extends ManagerBase implements Lifecycle {
     serializer = (Serializer) Class.forName(serializationStrategyClass).newInstance();
 
     Loader loader = null;
-    Context context = this.getContext();
-    if (context != null) {
-      loader = context.getLoader();
+
+    if (getContainer() != null) {
+      loader = getContainer().getLoader();
     }
 
     ClassLoader classLoader = null;
