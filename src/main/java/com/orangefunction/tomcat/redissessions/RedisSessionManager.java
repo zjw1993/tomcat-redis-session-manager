@@ -1,13 +1,7 @@
 package com.orangefunction.tomcat.redissessions;
 
-import org.apache.catalina.Lifecycle;
-import org.apache.catalina.LifecycleException;
-import org.apache.catalina.LifecycleListener;
+import org.apache.catalina.*;
 import org.apache.catalina.util.LifecycleSupport;
-import org.apache.catalina.LifecycleState;
-import org.apache.catalina.Loader;
-import org.apache.catalina.Valve;
-import org.apache.catalina.Session;
 import org.apache.catalina.session.ManagerBase;
 
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
@@ -713,9 +707,9 @@ public class RedisSessionManager extends ManagerBase implements Lifecycle {
     serializer = (Serializer) Class.forName(serializationStrategyClass).newInstance();
 
     Loader loader = null;
-
-    if (getContainer() != null) {
-      loader = getContainer().getLoader();
+    Context context = this.getContext();
+    if (context != null) {
+      loader = context.getLoader();
     }
 
     ClassLoader classLoader = null;
